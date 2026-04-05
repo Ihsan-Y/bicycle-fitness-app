@@ -117,7 +117,7 @@ HOME_HTML = """
                 <span class="hint-text text-start">En az 8 karakter (Büyük/Küçük harf ve Sayı)</span>
                 
                 <input type="email" name="email" class="form-control mb-2" placeholder="E-posta" required value="{{ d.email or '' }}">
-                <input type="tel" name="tel" class="form-control" placeholder="Telefon (Örn: 5xx1234567)" required>
+                <input type="tel" name="tel" class="form-control" placeholder="Telefon (Örn: 5xx1234567)" required value="{{ d.tel or '' }}">
                 <small class="text-muted">Başında "0" olmadan 10 hane giriniz.</small>
                 
                 <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" onclick="syncPass()">HEMEN KAYIT OL</button>
