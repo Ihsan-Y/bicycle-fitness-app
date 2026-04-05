@@ -344,6 +344,15 @@ def login():
     flash("Hatalı kullanıcı adı veya şifre!", "login_err")
     return redirect(url_for('home'))
 
+@app.route('/antrenman/aletsiz')
+def aletsiz():
+    # 'hareketler' ismi HTML'deki {% for h in hareketler %} ile eşleşmeli
+    return render_template_string(WORKOUT_HTML, tip="Aletsiz", hareketler=WORKOUTS['aletsiz'])
+
+@app.route('/antrenman/aletli')
+def aletli():
+    return render_template_string(WORKOUT_HTML, tip="Aletli", hareketler=WORKOUTS['aletli'])
+
 @app.route('/logout')
 def logout():
     return redirect(url_for('home'))
