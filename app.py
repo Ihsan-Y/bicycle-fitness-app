@@ -34,8 +34,15 @@ def validate_email(email):
 
 def validate_phone(tel):
     if not tel: return False
+    # Tüm rakam dışı karakterleri sil (boşluk, parantez, tire vb.)
     nums = re.sub(r"\D", "", tel)
-    return len(nums) == 10 and not nums.startswith('0')
+    
+    # Kural: Tam 10 hane olmalı ve 5 ile başlamalı (Türkiye formatı)
+    # Eğer kullanıcı 05xx yazarsa, başındaki 0'ı atıp 10 hane mi diye bakıyoruz
+    if len(nums) == 11 and nums.startswith('0'):
+        nums = nums[1:]
+    
+    return len(nums) == 10 and nums.startswith('5')
 
 def validate_password(pw):
     if not pw or len(pw) < 8: return False
@@ -277,6 +284,10 @@ def check_modals():
     if not validate_email(data['email']): 
         flash("E-posta geçersiz!", "reg_err")
         return render_template_string(HOME_HTML, d=data, err='email')
+    
+    if not validate_phone(data['tel']): 
+        flash("Telefon numarası başında 0 olmadan 10 hane olmalıdır (Örn: 5xx1234567)", "reg_err")
+        return render_template_string(HOME_HTML, d=data, err='tel')
 
     # SQLite Mükerrer Kontrolü
     conn = get_db_connection()
