@@ -352,6 +352,38 @@ def aletsiz():
 def aletli():
     return render_template_string(WORKOUT_HTML, tip="Aletli", hareketler=WORKOUTS['aletli'])
 
+@app.route('/gizli-admin-panel')
+def admin_panel():
+    conn = get_db_connection()
+    users = conn.execute('SELECT * FROM kullanicilar').fetchall()
+    conn.close()
+    
+    html = """
+    <html>
+    <head><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></head>
+    <body class="container mt-5">
+        <h2>Kayıtlı Kullanıcılar</h2>
+        <table class="table table-striped mt-3">
+            <thead><tr><th>ID</th><th>Ad Soyad</th><th>Kullanıcı Adı</th><th>E-posta</th><th>Telefon</th><th>Tarih</th></tr></thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>{{ u.id }}</td>
+                    <td>{{ u.ad }} {{ u.soyad }}</td>
+                    <td>{{ u.kullanici_adi }}</td>
+                    <td>{{ u.eposta }}</td>
+                    <td>{{ u.telefon }}</td>
+                    <td>{{ u.kayit_tarihi }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <a href="/" class="btn btn-primary">Ana Sayfaya Dön</a>
+    </body>
+    </html>
+    """
+    return render_template_string(html, users=users)
+
 @app.route('/logout')
 def logout():
     return redirect(url_for('home'))
