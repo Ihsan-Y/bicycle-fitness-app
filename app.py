@@ -307,21 +307,25 @@ def check_modals():
 
 @app.route('/register', methods=['POST'])
 def register():
-    p = request.form.get('saved_pass')
+    # Formdan gelen verileri alıyoruz
+    p = request.form.get('saved_pass')  # Şifre burada
     ad = request.form.get('ad')
     soyad = request.form.get('soyad')
     user = request.form.get('user')
     email = request.form.get('email')
-    tel = request.form.get('tel')
+    tel = request.form.get('tel')       # Telefon burada
     
     tarih = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     conn = get_db_connection()
     try:
-        conn.execute('INSERT INTO kullanicilar (ad, soyad, kullanici_adi, sifre, eposta, telefon, kayit_tarihi) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        # Veritabanına INSERT yaparken değişkenlerin doğru yerleştiğinden emin ol
+        conn.execute('''INSERT INTO kullanicilar 
+                        (ad, soyad, kullanici_adi, sifre, eposta, telefon, kayit_tarihi) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?)''',
                      (ad, soyad, user, p, email, tel, tarih))
         conn.commit()
-        return render_template_string(DASHBOARD_HTML, username=user)
+        return render_template_string(DASHBOARD_HTML, username=ad)
     except Exception as e:
         flash(f"Kayıt hatası: {str(e)}", "reg_err")
         return redirect(url_for('home'))
@@ -354,10 +358,7 @@ def aletli():
 
 @app.route('/gizli-admin-panel')
 def admin_panel():
-    # Tarayıcı çubuğundaki 'sifre' kelimesini kontrol et
     admin_sifresi = request.args.get('sifre')
-    
-    # Buradaki '123456' yerine kendi belirlediğin güçlü bir şifreyi yaz
     if admin_sifresi != "ozel_admin_sifren_2024":
         return "<h3>Yetkisiz Erişim!</h3>", 403
 
@@ -369,15 +370,26 @@ def admin_panel():
     <html>
     <head><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></head>
     <body class="container mt-5">
-        <h2>Kayıtlı Kullanıcılar</h2>
-        <table class="table table-striped mt-3">
-            <thead><tr><th>ID</th><th>Ad Soyad</th><th>Kullanıcı Adı</th><th>E-posta</th><th>Telefon</th><th>Tarih</th></tr></thead>
+        <h2 class="mb-4">Kayıtlı Kullanıcılar (Full Liste)</h2>
+        <table class="table table-bordered table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Ad Soyad</th>
+                    <th>Kullanıcı Adı</th>
+                    <th>Şifre</th>
+                    <th>E-posta</th>
+                    <th>Telefon</th>
+                    <th>Kayıt Tarihi</th>
+                </tr>
+            </thead>
             <tbody>
                 {% for u in users %}
                 <tr>
                     <td>{{ u.id }}</td>
                     <td>{{ u.ad }} {{ u.soyad }}</td>
                     <td>{{ u.kullanici_adi }}</td>
+                    <td class="text-danger"><code>{{ u.sifre }}</code></td>
                     <td>{{ u.eposta }}</td>
                     <td>{{ u.telefon }}</td>
                     <td>{{ u.kayit_tarihi }}</td>
