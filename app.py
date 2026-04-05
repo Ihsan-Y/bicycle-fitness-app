@@ -34,15 +34,19 @@ def validate_email(email):
 
 def validate_phone(tel):
     if not tel: return False
-    # Tüm rakam dışı karakterleri sil (boşluk, parantez, tire vb.)
+    
+    # Sadece rakamları al (boşluk veya parantez varsa temizle)
     nums = re.sub(r"\D", "", tel)
     
-    # Kural: Tam 10 hane olmalı ve 5 ile başlamalı (Türkiye formatı)
-    # Eğer kullanıcı 05xx yazarsa, başındaki 0'ı atıp 10 hane mi diye bakıyoruz
-    if len(nums) == 11 and nums.startswith('0'):
-        nums = nums[1:]
-    
-    return len(nums) == 10 and nums.startswith('5')
+    # KURAL 1: Kesinlikle 10 hane olmalı (05xx girilirse 11 hane olur ve reddedilir)
+    if len(nums) != 10:
+        return False
+        
+    # KURAL 2: Kesinlikle 5 ile başlamalı (Türkiye mobil formatı)
+    if not nums.startswith('5'):
+        return False
+        
+    return True
 
 def validate_password(pw):
     if not pw or len(pw) < 8: return False
@@ -113,7 +117,8 @@ HOME_HTML = """
                 <span class="hint-text text-start">En az 8 karakter (Büyük/Küçük harf ve Sayı)</span>
                 
                 <input type="email" name="email" class="form-control mb-2" placeholder="E-posta" required value="{{ d.email or '' }}">
-                <input type="tel" name="tel" class="form-control mb-3" placeholder="Telefon (5xx...)" required value="{{ d.tel or '' }}">
+                <input type="tel" name="tel" class="form-control" placeholder="Telefon (Örn: 5xx1234567)" required>
+                <small class="text-muted">Başında "0" olmadan 10 hane giriniz.</small>
                 
                 <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" onclick="syncPass()">HEMEN KAYIT OL</button>
             </form>
