@@ -259,6 +259,30 @@ WORKOUT_HTML = """
 </html>
 """
 
+ADMIN_LOGIN_HTML = """
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Admin Girişi</title>
+</head>
+<body class="bg-light d-flex align-items-center" style="height: 100vh;">
+    <div class="container card shadow-sm p-4" style="max-width: 400px;">
+        <h3 class="text-center text-primary mb-4">Yönetici Paneli</h3>
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}{% for m in messages %}<div class="alert alert-danger small">{{ m }}</div>{% endfor %}{% endif %}
+        {% endwith %}
+        <form action="/admin-login-kontrol" method="POST">
+            <input type="text" name="admin_user" class="form-control mb-3" placeholder="Yönetici Adı" required>
+            <input type="password" name="admin_pass" class="form-control mb-3" placeholder="Şifre" required>
+            <button type="submit" class="btn btn-primary w-100">Giriş Yap</button>
+        </form>
+    </div>
+</body>
+</html>
+"""
+
 # --- ROUTES ---
 
 @app.route('/')
@@ -356,52 +380,83 @@ def aletsiz():
 def aletli():
     return render_template_string(WORKOUT_HTML, tip="Aletli", hareketler=WORKOUTS['aletli'])
 
-@app.route('/gizli-admin-panel')
-def admin_panel():
-    admin_sifresi = request.args.get('sifre')
-    if admin_sifresi != "ozel_admin_sifren_2024":
-        return "<h3>Yetkisiz Erişim!</h3>", 403
-
-    conn = get_db_connection()
-    users = conn.execute('SELECT * FROM kullanicilar').fetchall()
-    conn.close()
-    
-    html = """
-    <html>
-    <head><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></head>
-    <body class="container mt-5">
-        <h2 class="mb-4">Kayıtlı Kullanıcılar (Full Liste)</h2>
-        <table class="table table-bordered table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>ID</th>
-                    <th>Ad Soyad</th>
-                    <th>Kullanıcı Adı</th>
-                    <th>Şifre</th>
-                    <th>E-posta</th>
-                    <th>Telefon</th>
-                    <th>Kayıt Tarihi</th>
+ADMIN_PANEL_HTML = """
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Admin Kontrol Paneli</title>
+</head>
+<body class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Kullanıcı Yönetimi</h2>
+        <a href="/" class="btn btn-outline-secondary btn-sm">Çıkış Yap</a>
+    </div>
+    <table class="table table-hover border shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th><th>Ad Soyad</th><th>Kullanıcı Adı</th><th>Şifre</th><th>Telefon</th><th>İşlemler</th>
                 </tr>
-            </thead>
-            <tbody>
-                {% for u in users %}
-                <tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+            <tr>
+                <form action="/admin/guncelle/{{ u.id }}" method="POST">
                     <td>{{ u.id }}</td>
-                    <td>{{ u.ad }} {{ u.soyad }}</td>
-                    <td>{{ u.kullanici_adi }}</td>
-                    <td class="text-danger"><code>{{ u.sifre }}</code></td>
-                    <td>{{ u.eposta }}</td>
-                    <td>{{ u.telefon }}</td>
-                    <td>{{ u.kayit_tarihi }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <a href="/" class="btn btn-primary">Ana Sayfaya Dön</a>
-    </body>
-    </html>
-    """
-    return render_template_string(html, users=users)
+                    <td><input type="text" name="ad_soyad" value="{{ u.ad }} {{ u.soyad }}" class="form-control form-control-sm"></td>
+                    <td><input type="text" name="k_adi" value="{{ u.kullanici_adi }}" class="form-control form-control-sm"></td>
+                    <td><input type="text" name="sifre" value="{{ u.sifre }}" class="form-control form-control-sm text-danger"></td>
+                    <td><input type="text" name="tel" value="{{ u.telefon }}" class="form-control form-control-sm"></td>
+                    <td>
+                        <div class="btn-group">
+                            <button type="submit" class="btn btn-success btn-sm">Güncelle</button>
+                            <a href="/admin/sil/{{ u.id }}" class="btn btn-danger btn-sm" onclick="return confirm('Silmek istediğine emin misin?')">Sil</a>
+                            </div>
+                            </td>
+            </form>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
+"""
+
+@app.route('/admin-giris')
+def admin_giris():
+    return render_template_string(ADMIN_LOGIN_HTML)
+
+@app.route('/admin-login-kontrol', methods=['POST'])
+def admin_login_kontrol():
+    u = request.form.get('admin_user')
+    p = request.form.get('admin_pass')
+    # Şifreyi buradan istediğin gibi değiştirebilirsin
+    if u == "admin" and p == "fitness_patron_2024":
+        conn = get_db_connection()
+        users = conn.execute('SELECT * FROM kullanicilar').fetchall()
+        conn.close()
+        return render_template_string(ADMIN_PANEL_HTML, users=users)
+    else:
+        flash("Yetkisiz Giriş Denemesi!")
+        return redirect('/admin-giris')
+
+@app.route('/admin/sil/<int:id>')
+def admin_sil(id):
+    conn = get_db_connection()
+    conn.execute('DELETE FROM kullanicilar WHERE id = ?', (id,))
+    conn.commit()
+    conn.close()
+    return "Kullanıcı silindi. Geri dönüp sayfayı yenileyin.", {"Refresh": "1; url=/admin-giris"}
+
+@app.route('/admin/guncelle/{{ id }}', methods=['POST'])
+# Not: Güncelleme işlemi için daha kompleks bir yapı gerekir, 
+# şimdilik silme ve listeleme önceliğimiz.
+def admin_guncelle(id):
+    return "Güncelleme özelliği yakında eklenecek."
+    
+    
+
 
 @app.route('/logout')
 def logout():
