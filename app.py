@@ -354,6 +354,13 @@ def aletli():
 
 @app.route('/gizli-admin-panel')
 def admin_panel():
+    # Tarayıcı çubuğundaki 'sifre' kelimesini kontrol et
+    admin_sifresi = request.args.get('sifre')
+    
+    # Buradaki '123456' yerine kendi belirlediğin güçlü bir şifreyi yaz
+    if admin_sifresi != "ozel_admin_sifren_2024":
+        return "<h3>Yetkisiz Erişim!</h3>", 403
+
     conn = get_db_connection()
     users = conn.execute('SELECT * FROM kullanicilar').fetchall()
     conn.close()
