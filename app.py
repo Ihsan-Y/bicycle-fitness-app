@@ -452,10 +452,27 @@ def admin_sil(id):
 @app.route('/admin/guncelle/{{ id }}', methods=['POST'])
 # Not: Güncelleme işlemi için daha kompleks bir yapı gerekir, 
 # şimdilik silme ve listeleme önceliğimiz.
+
+@app.route('/admin/guncelle/<int:id>', methods=['POST'])
 def admin_guncelle(id):
-    return "Güncelleme özelliği yakında eklenecek."
-    
-    
+    # Form verilerini al
+    yeni_ad_soyad = request.form.get('ad_soyad').split(' ')
+    ad = yeni_ad_soyad[0]
+    soyad = " ".join(yeni_ad_soyad[1:]) if len(yeni_ad_soyad) > 1 else ""
+    k_adi = request.form.get('k_adi')
+    sifre = request.form.get('sifre')
+    tel = request.form.get('tel')
+
+    conn = get_db_connection()
+    # Veritabanını güncelle
+    conn.execute('''UPDATE kullanicilar 
+                    SET ad=?, soyad=?, kullanici_adi=?, sifre=?, telefon=? 
+                    WHERE id=?''', 
+                 (ad, soyad, k_adi, sifre, tel, id))
+    conn.commit()
+    conn.close()
+    # İşlem bitince admin paneline geri yönlendir
+    return "Güncellendi! Yönlendiriliyorsunuz...", {"Refresh": "1; url=/admin-giris"}
 
 
 @app.route('/logout')
