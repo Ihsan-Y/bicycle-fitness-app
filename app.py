@@ -294,14 +294,13 @@ def check_modals():
         flash("Telefon numarası başında 0 olmadan 10 hane olmalıdır (Örn: 5xx1234567)", "reg_err")
         return render_template_string(HOME_HTML, d=data, err='tel')
 
-    # SQLite Mükerrer Kontrolü
+    # SQLite Mükerrer Kontrolü - Daha detaylı
     conn = get_db_connection()
-    existing = conn.execute('SELECT * FROM kullanicilar WHERE kullanici_adi = ? OR eposta = ? OR telefon = ?', 
-                            (data['user'], data['email'], data['tel'])).fetchone()
+    row = conn.execute('SELECT * FROM kullanicilar WHERE telefon = ?', (data['tel'],)).fetchone()
     conn.close()
 
-    if existing:
-        flash("Bu kullanıcı adı, e-posta veya telefon zaten kayıtlı!", "reg_err")
+    if row:
+        flash(f"Bu telefon numarası ({data['tel']}) zaten bir hesapla eşleşmiş. Lütfen başka bir numara deneyin.", "reg_err")
         return render_template_string(HOME_HTML, d=data, err='duplicate')
     
     return render_template_string(HOME_HTML, d=data, err=None, open_modals=True)
