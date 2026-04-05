@@ -396,8 +396,13 @@ ADMIN_PANEL_HTML = """
     <table class="table table-hover border shadow-sm">
         <thead class="table-dark">
             <tr>
-                <th>ID</th><th>Ad Soyad</th><th>Kullanıcı Adı</th><th>Şifre</th><th>Telefon</th><th>İşlemler</th>
-                </tr>
+                <th>ID</th>
+                <th>Ad Soyad</th>
+                <th>Kullanıcı Adı</th>
+                <th>Şifre</th>
+                <th>E-posta</th> <th>Telefon</th>
+                <th>İşlemler</th>
+            </tr>
         </thead>
         <tbody>
             {% for u in users %}
@@ -407,14 +412,14 @@ ADMIN_PANEL_HTML = """
                     <td><input type="text" name="ad_soyad" value="{{ u.ad }} {{ u.soyad }}" class="form-control form-control-sm"></td>
                     <td><input type="text" name="k_adi" value="{{ u.kullanici_adi }}" class="form-control form-control-sm"></td>
                     <td><input type="text" name="sifre" value="{{ u.sifre }}" class="form-control form-control-sm text-danger"></td>
-                    <td><input type="text" name="tel" value="{{ u.telefon }}" class="form-control form-control-sm"></td>
+                    <td><input type="email" name="email" value="{{ u.eposta }}" class="form-control form-control-sm"></td> <td><input type="text" name="tel" value="{{ u.telefon }}" class="form-control form-control-sm"></td>
                     <td>
                         <div class="btn-group">
                             <button type="submit" class="btn btn-success btn-sm">Güncelle</button>
                             <a href="/admin/sil/{{ u.id }}" class="btn btn-danger btn-sm" onclick="return confirm('Silmek istediğine emin misin?')">Sil</a>
-                            </div>
-                            </td>
-            </form>
+                        </div>
+                    </td>
+                </form>
             </tr>
             {% endfor %}
         </tbody>
@@ -455,24 +460,23 @@ def admin_sil(id):
 
 @app.route('/admin/guncelle/<int:id>', methods=['POST'])
 def admin_guncelle(id):
-    # Form verilerini al
     yeni_ad_soyad = request.form.get('ad_soyad').split(' ')
     ad = yeni_ad_soyad[0]
     soyad = " ".join(yeni_ad_soyad[1:]) if len(yeni_ad_soyad) > 1 else ""
     k_adi = request.form.get('k_adi')
     sifre = request.form.get('sifre')
+    email = request.form.get('email') # Formdan e-posta bilgisini al
     tel = request.form.get('tel')
 
     conn = get_db_connection()
-    # Veritabanını güncelle
+    # SQL sorgusuna eposta=? kısmını ekle
     conn.execute('''UPDATE kullanicilar 
-                    SET ad=?, soyad=?, kullanici_adi=?, sifre=?, telefon=? 
+                    SET ad=?, soyad=?, kullanici_adi=?, sifre=?, eposta=?, telefon=? 
                     WHERE id=?''', 
-                 (ad, soyad, k_adi, sifre, tel, id))
+                 (ad, soyad, k_adi, sifre, email, tel, id))
     conn.commit()
     conn.close()
-    # İşlem bitince admin paneline geri yönlendir
-    return "Güncellendi! Yönlendiriliyorsunuz...", {"Refresh": "1; url=/admin-giris"}
+    return "Bilgiler başarıyla güncellendi!", {"Refresh": "1; url=/admin-giris"}
 
 
 @app.route('/logout')
